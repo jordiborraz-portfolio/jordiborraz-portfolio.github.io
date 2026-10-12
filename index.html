@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jordi Borraz — Portfolio</title>
+<meta name="description" content="Jordi Borraz — Technical Artist, VFX and motion for games.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400;1,9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f3efe6;
+    --paper-2: #e9e3d6;
+    --ink: #151412;
+    --body: #34322e;
+    --soft: #7a756b;
+    --rule: #d6cfc1;
+    --accent: #e4471c;
+    --serif: "Fraunces", Georgia, serif;
+    --sans: "Inter", system-ui, sans-serif;
+    --pad: 40px;
+    --h: min(74vh, 860px);                       /* height of a work card */
+    --expo: cubic-bezier(.19,1,.22,1);           /* fast start, very soft landing */
+    --expo-io: cubic-bezier(.87,0,.13,1);        /* slow-fast-slow, for big moves */
+    --back: cubic-bezier(.34,1.56,.64,1);        /* a small overshoot */
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; overflow: hidden; }
+  a { color: inherit; text-decoration: none; }
+  img, video { display: block; }
+  button { font: inherit; color: inherit; }
+  ::selection { background: var(--accent); color: #fff; }
+
+  /* ---------- Top bar ---------- */
+  .top { position: fixed; top: 0; left: 0; right: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; padding: 18px var(--pad); opacity: 0; transform: translateY(-12px); transition: opacity .9s .9s, transform 1.2s .9s var(--expo); }
+  .ready .top { opacity: 1; transform: none; }
+  .mark { font-family: var(--serif); font-weight: 800; font-size: 21px; letter-spacing: -.02em; }
+  .mark em { font-weight: 400; color: var(--accent); }
+  .top nav { display: flex; align-items: center; gap: 26px; font-size: 14px; }
+  .top nav button { all: unset; cursor: pointer; position: relative; color: var(--body); }
+  .top nav button::after { content: ""; position: absolute; left: 0; right: 0; bottom: -4px; height: 1.5px; background: var(--ink); transform: scaleX(0); transform-origin: right; transition: transform .7s var(--expo); }
+  .top nav button:hover::after, .top nav button.on::after { transform: scaleX(1); transform-origin: left; }
+  .top nav button.on { color: var(--ink); }
+  .top nav .cv { position: relative; overflow: hidden; background: var(--accent); color: #fff; padding: 8px 15px; font-weight: 500; isolation: isolate; }
+  .top nav .cv::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); transform: translateY(101%); transition: transform .6s var(--expo); }
+  .top nav .cv:hover::before { transform: none; }
+
+  /* ---------- Folio (bottom bar) ---------- */
+  .folio { position: fixed; left: var(--pad); right: var(--pad); bottom: 0; z-index: 10; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 24px; padding: 14px 0 16px; font-size: 12px; color: var(--soft); opacity: 0; transition: opacity 1s 1.1s; }
+  .ready .folio { opacity: 1; }
+  .folio .bar { height: 1px; background: var(--rule); position: relative; }
+  .folio .bar i { position: absolute; left: 0; top: -1px; height: 3px; width: 100%; background: var(--accent); transform: scaleX(0); transform-origin: 0 50%; }
+  .folio b { color: var(--ink); font-weight: 600; letter-spacing: .14em; text-transform: uppercase; font-size: 11px; }
+  .where { position: relative; height: 22px; min-width: 220px; overflow: hidden; text-align: right; font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--ink); }
+  .where span { position: absolute; right: 0; top: 0; white-space: nowrap; transition: transform .7s var(--expo), opacity .5s; }
+  .where span.out { transform: translateY(-100%); opacity: 0; }
+  .where span.in { transform: translateY(100%); opacity: 0; }
+
+  /* ---------- The reel ---------- */
+  .reel {
+    height: 100vh; display: flex; align-items: center; gap: 30px;
+    overflow-x: auto; overflow-y: hidden; padding: 0 var(--pad);
+    scrollbar-width: none; cursor: grab; user-select: none;
+  }
+  .reel::-webkit-scrollbar { display: none; }
+  .reel.dragging { cursor: grabbing; }
+  .works { display: contents; }
+
+  /* Section tab: the spine between sections; its line draws in */
+  .tab { flex: 0 0 auto; align-self: center; height: var(--h); width: 44px; margin: 0 6px 0 24px; display: flex; align-items: flex-start; position: relative; }
+  .tab::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 1px; background: var(--ink); transform: scaleY(0); transform-origin: top; transition: transform 1.4s var(--expo-io); }
+  .tab.in::before { transform: none; }
+  .tab span { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 11px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--soft); padding-left: 12px; white-space: nowrap; opacity: 0; transition: opacity .8s .5s; }
+  .tab.in span { opacity: 1; }
+  .tab span b { color: var(--accent); font-weight: 600; }
+
+  /* ---------- Cover (page one, mirrors the CV header) ---------- */
+  .cover { flex: 0 0 auto; width: min(1180px, 84vw); padding-right: 40px; }
+  .eyebrow { position: relative; display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--soft); padding-bottom: 14px; }
+  .eyebrow::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1.5px; background: var(--ink); transform: scaleX(0); transform-origin: left; transition: transform 1.6s .1s var(--expo-io); }
+  .ready .eyebrow::after { transform: none; }
+  .eyebrow span { opacity: 0; transition: opacity 1s .6s; }
+  .ready .eyebrow span { opacity: 1; }
+  .eyebrow span:last-child { color: var(--accent); }
+  .cover h1 { font-family: var(--serif); font-weight: 800; font-size: clamp(96px, 13.5vw, 230px); line-height: .8; letter-spacing: -.045em; margin: 30px 0 0; }
+  .cover h1 em { font-weight: 400; color: var(--accent); }
+  .ln { display: block; overflow: hidden; padding: 0 .1em .22em 0; margin: 0 -.1em -.22em 0; }
+  .ln > span { display: block; transform: translateY(108%) rotate(4deg); transform-origin: 0 100%; transition: transform 1.5s var(--expo); }
+  .ln:nth-child(2) > span { transition-delay: .12s; }
+  .ready .ln > span { transform: none; }
+  .cover .role { font-family: var(--serif); font-style: italic; font-size: clamp(22px, 2vw, 30px); color: var(--body); margin: 22px 0 0; opacity: 0; transform: translateY(16px); transition: opacity 1s .55s, transform 1.4s .55s var(--expo); }
+  .ready .cover .role { opacity: 1; transform: none; }
+  .strip { position: relative; display: grid; grid-template-columns: repeat(2, 1fr); margin-top: 38px; }
+  .strip::before, .strip::after { content: ""; position: absolute; left: 0; right: 0; height: 1px; background: var(--ink); transform: scaleX(0); transform-origin: left; transition: transform 1.6s .5s var(--expo-io); }
+  .strip::before { top: 0; } .strip::after { bottom: 0; transition-delay: .62s; }
+  .ready .strip::before, .ready .strip::after { transform: none; }
+  .strip > * { padding: 12px 0; opacity: 0; transform: translateY(10px); transition: opacity .9s, transform 1.2s var(--expo); }
+  .strip > *:nth-child(1) { transition-delay: .85s; } .strip > *:nth-child(2) { transition-delay: .95s; } .strip > *:nth-child(3) { transition-delay: 1.05s; }
+  .ready .strip > * { opacity: 1; transform: none; }
+  .strip > * + * { padding-left: 16px; border-left: 1px solid var(--rule); }
+  .strip small { display: block; font-size: 10px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--soft); }
+  .strip b { font-weight: 500; font-size: 15px; background: linear-gradient(var(--accent), var(--accent)) 0 100% / 100% 1px no-repeat; transition: background-size .6s var(--expo), color .3s; }
+  .strip div b { background: none; }
+  .strip a:hover b { color: var(--accent); background-size: 0 1px; }
+  .go { display: inline-flex; gap: 10px; align-items: center; margin-top: 26px; font-size: 14px; color: var(--body); opacity: 0; transition: opacity 1s 1.3s; }
+  .ready .go { opacity: 1; }
+  .go b { color: var(--accent); display: inline-block; animation: nudge 1.8s var(--expo) infinite; }
+  @keyframes nudge { 0%, 100% { transform: none; } 40% { transform: translateX(9px); } }
+
+  /* ---------- Work cards ---------- */
+  .card { flex: 0 0 auto; margin: 0 22px; position: relative; cursor: pointer; }
+  .card .lift { position: relative; transition: transform 1.2s var(--expo), opacity .9s; transition-delay: var(--d, 0ms); }
+  .card:not(.in) .lift { transform: translateX(120px); opacity: 0; }
+  .frame { position: relative; z-index: 1; height: var(--h); aspect-ratio: 9 / 16; background: var(--paper-2); overflow: hidden; clip-path: inset(0 0 0 0); transition: clip-path 1.4s var(--expo-io); transition-delay: var(--d, 0ms); }
+  .card:not(.in) .frame { clip-path: inset(100% 0 0 0); }
+  .media { position: absolute; inset: 0; }
+  .media > img, .media > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+  .media > video { opacity: 0; transition: opacity .6s, transform 1.8s var(--expo); }
+  .live .media > video { opacity: 1; }
+  .sheet { position: absolute; top: 0; left: 0; z-index: 0; width: 100%; height: var(--h); overflow: hidden; background: var(--paper-2); border: 1px solid var(--rule); transform-origin: 50% 100%; transition: transform .9s var(--back); will-change: transform; }
+  .sheet img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(.5) sepia(.2) brightness(.85); opacity: .9; }
+  .sheet.s2 { z-index: -1; }
+  .card:not(.in) .sheet { opacity: 0; }
+  /* width 0 + min-width 100%: long titles wrap to the frame instead of widening the card */
+  .card figcaption { display: block; width: 0; min-width: 100%; padding-top: 12px; }
+  .card .tag:empty { display: none; }
+  .card h3 { margin: 0; font-family: var(--serif); font-weight: 600; font-size: 26px; line-height: 1.05; letter-spacing: -.01em; }
+  .card h3 span { background: linear-gradient(var(--ink), var(--ink)) 0 100% / 0 1px no-repeat; transition: background-size .7s var(--expo); }
+  .card .tag { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 8px; font-size: 11px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--soft); }
+  .card .sub::before { content: ""; display: inline-block; width: 14px; height: 1px; margin: 0 8px 3px 0; vertical-align: middle; background: var(--accent); }
+  .card .more { margin-left: auto; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); white-space: nowrap; transition: transform .8s var(--expo); }
+  /* Short description over every card and every piece in a chapter; slides up on hover */
+  .desc { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 44px 20px 22px; background: linear-gradient(rgba(21,20,18,0), rgba(21,20,18,.88) 38%); color: #f3efe6; transform: translateY(101%); transition: transform 1.1s var(--expo); pointer-events: none; }
+  .desc p { max-width: 560px; margin: 0; font-family: var(--serif); font-size: 15px; line-height: 1.45; opacity: 0; transform: translateY(14px); transition: opacity .7s .18s, transform 1.1s .18s var(--expo); }
+  @media (hover: hover) {
+    .card:hover .desc, .citem:hover .desc { transform: none; }
+    .card:hover .desc p, .citem:hover .desc p { opacity: 1; transform: none; }
+    .card:hover .sheet.s1 { transform: translate(-10px, -18px) rotate(-3deg) scale(.95); }
+    .card:hover .sheet.s2 { transform: translate(10px, -30px) rotate(3.5deg) scale(.9); transition-delay: 40ms; }
+    .card:hover .more { transform: translateX(6px); }
+    .card:not(.single):hover h3 span { background-size: 100% 1px; }
+  }
+
+  /* ---------- Curriculum spread (unchanged) ---------- */
+  .cvspread { flex: 0 0 auto; display: grid; grid-template-columns: 360px 400px 360px 320px; gap: 44px; align-items: start; height: calc(100vh - 160px); max-height: 760px; }
+  .cvcol { height: 100%; display: flex; flex-direction: column; }
+  .cvcol + .cvcol { border-left: 1px solid var(--rule); padding-left: 44px; margin-left: -1px; }
+  .lbl small { display: block; font-size: 11px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+  .lbl h2 { margin: 0 0 22px; font-family: var(--serif); font-weight: 800; font-size: 40px; line-height: 1; letter-spacing: -.03em; }
+  .lede { margin: 0; font-family: var(--serif); font-size: 21px; line-height: 1.42; color: var(--ink); }
+  .lede::first-letter { font-weight: 800; color: var(--accent); }
+  .entry + .entry { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--rule); }
+  .yr { font-family: var(--serif); font-weight: 600; font-size: 15px; color: var(--accent); }
+  .entry h4 { margin: 2px 0 0; font-size: 17px; font-weight: 600; line-height: 1.3; }
+  .org { font-family: var(--serif); font-style: italic; color: var(--body); font-size: 16px; }
+  .org b { font-family: var(--sans); font-style: normal; font-weight: 600; color: var(--ink); font-size: 15px; }
+  .entry p, .entry ul { margin: 6px 0 0; color: var(--body); font-size: 15px; }
+  .entry ul { padding: 0; list-style: none; }
+  .entry li { position: relative; padding-left: 20px; margin-top: 3px; }
+  .entry li::before { content: "—"; position: absolute; left: 0; color: var(--accent); }
+  .kit { list-style: none; margin: 0 0 26px; padding: 0; }
+  .kit li { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dotted var(--rule); font-size: 15px; font-weight: 500; }
+  .kit li span { font-family: var(--serif); font-style: italic; font-weight: 400; color: var(--soft); }
+  .btn { margin-top: auto; align-self: flex-start; background: var(--accent); color: #fff; padding: 13px 20px; font-weight: 600; font-size: 15px; transition: background .25s; }
+  .btn:hover { background: var(--ink); }
+  /* Gentle entrance for the CV columns (layout unchanged) */
+  .cvcol { opacity: 0; transform: translateY(26px); transition: opacity 1s, transform 1.3s var(--expo); }
+  .cvspread.in .cvcol { opacity: 1; transform: none; }
+  .cvspread.in .cvcol:nth-child(2) { transition-delay: .08s; } .cvspread.in .cvcol:nth-child(3) { transition-delay: .16s; } .cvspread.in .cvcol:nth-child(4) { transition-delay: .24s; }
+
+  /* ---------- Contact ---------- */
+  .contact { flex: 0 0 auto; width: min(860px, 80vw); padding-right: 60px; }
+  .contact h2 { margin: 0; font-family: var(--serif); font-weight: 800; font-size: clamp(64px, 8.5vw, 150px); line-height: .84; letter-spacing: -.045em; }
+  .contact h2 em { font-weight: 400; color: var(--accent); }
+  .contact .mail { display: inline-block; margin-top: 30px; font-family: var(--serif); font-size: clamp(24px, 2.6vw, 40px); background: linear-gradient(var(--accent), var(--accent)) 0 100% / 100% 2px no-repeat; padding-bottom: 2px; transition: color .3s, background-size .7s var(--expo); }
+  .contact .mail:hover { color: var(--accent); background-size: 0 2px; }
+  .contact .links { display: flex; gap: 22px; margin-top: 26px; font-size: 14px; color: var(--soft); }
+  .contact .links a:hover { color: var(--ink); }
+  .contact.rv .ln > span { transform: translateY(108%) rotate(4deg); }
+  .contact.rv.in .ln > span { transform: none; }
+  .contact .mail, .contact .links { opacity: 0; transform: translateY(14px); transition: opacity 1s .4s, transform 1.3s .4s var(--expo), color .3s, background-size .7s var(--expo); }
+  .contact.in .mail, .contact.in .links { opacity: 1; transform: none; }
+
+  /* ---------- Cursor follower ---------- */
+  .cur { position: fixed; left: 0; top: 0; z-index: 100; pointer-events: none; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: var(--accent); border: 1.5px solid var(--accent); display: grid; place-items: center; will-change: transform; transition: width .5s var(--expo), height .5s var(--expo), margin .5s var(--expo), background .25s, opacity .25s; }
+  .cur b { font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #fff; opacity: 0; transform: scale(.6); transition: opacity .3s, transform .6s var(--expo); }
+  .cur.big { width: 86px; height: 86px; margin: -43px 0 0 -43px; }
+  .cur.big b { opacity: 1; transform: none; }
+  .cur.link { width: 34px; height: 34px; margin: -17px 0 0 -17px; background: transparent; }
+  .cur.hide { opacity: 0; }
+  /* The orange dot replaces the system cursor everywhere */
+  @media (hover: hover) and (pointer: fine) { html, body, *, *::before, *::after { cursor: none !important; } }
+  @media not ((hover: hover) and (pointer: fine)) { .cur { display: none; } }
+
+  /* ---------- Chapter view (opens out of a card) ---------- */
+  .coll { position: fixed; inset: 0; z-index: 30; background: var(--paper); display: none; }
+  .coll.open { display: block; }
+  /* Hidden unless an animation shows it (opening/closing a chapter); cancelling those must never leave it on screen */
+  .coll-cover { position: absolute; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; opacity: 0; }
+  .coll-cover img { width: 100%; height: 100%; object-fit: cover; }
+  .coll-bar { position: absolute; top: 0; left: 0; right: 0; z-index: 2; display: flex; justify-content: space-between; align-items: center; padding: 18px var(--pad); }
+  .back { all: unset; cursor: pointer; display: inline-flex; gap: 10px; align-items: center; font-size: 13px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; padding-bottom: 4px; background: linear-gradient(var(--ink), var(--ink)) 0 100% / 100% 1.5px no-repeat; transition: color .3s, background-size .7s var(--expo); }
+  .back b { color: var(--accent); display: inline-block; transition: transform .6s var(--expo); }
+  .back:hover { color: var(--accent); background-size: 0 1.5px; }
+  .back:hover b { transform: translateX(-6px); }
+  .coll-count { font-family: var(--serif); font-style: italic; font-size: 16px; color: var(--body); }
+  .creel { height: 100vh; display: flex; align-items: center; gap: 30px; overflow-x: auto; overflow-y: hidden; padding: 0 var(--pad); scrollbar-width: none; cursor: grab; user-select: none; }
+  .creel::-webkit-scrollbar { display: none; }
+  .creel.dragging { cursor: grabbing; }
+  .citems { display: contents; }
+  .cintro { flex: 0 0 auto; width: min(44vw, 640px); padding-right: 24px; }
+  .cintro .cnum { position: relative; font-size: 12px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); padding-bottom: 12px; }
+  .cintro .cnum::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1.5px; background: var(--ink); transform-origin: left; }
+  .cintro h2 { font-family: var(--serif); font-weight: 800; font-size: clamp(64px, 8vw, 140px); line-height: .84; letter-spacing: -.04em; margin: 24px 0 0; }
+  .cintro h2.long { font-size: clamp(44px, 4.8vw, 88px); line-height: .9; }
+  /* Extra room on the right and below so italic letters and descenders (g, y, p) are not clipped by the mask */
+  .cintro h2 .w { display: inline-block; overflow: hidden; vertical-align: top; padding: 0 .14em .26em 0; margin: 0 -.14em -.26em 0; }
+  .cintro h2 .w > span { display: inline-block; }
+  .cintro h2 .w:last-child > span { font-style: italic; font-weight: 400; color: var(--accent); }
+  .cintro p { font-family: var(--serif); font-style: italic; font-size: 22px; color: var(--body); margin: 18px 0 0; }
+  .cintro .cdesc { max-width: 460px; font-style: normal; font-size: 18px; line-height: 1.5; }
+  .cintro .cdesc:empty { display: none; }
+  .citem { flex: 0 0 auto; margin: 0; position: relative; }
+  .citem .frame { height: min(78vh, 900px); }
+  .citem .media { left: 0; width: 100%; }
+  /* Images shown whole (graphic design): letterboxed on paper in the reel, exact ratio inside a chapter */
+  .media.contain > img { object-fit: contain; padding: 9% 7%; }
+  .citem .media.contain > img { padding: 0; }
+  .citem figcaption { display: flex; gap: 10px; align-items: baseline; padding-top: 10px; }
+  .citem .fn { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  .citem .ft { font-family: var(--serif); font-size: 19px; }
+  .cnext { flex: 0 0 auto; width: min(520px, 70vw); padding: 0 40px 0 24px; border-left: 1px solid var(--ink); align-self: center; }
+  .cnext small { display: block; font-size: 11px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--soft); margin-bottom: 14px; }
+  .cnext .nx { all: unset; cursor: pointer; display: block; font-family: var(--serif); font-weight: 800; font-size: clamp(44px, 5vw, 84px); line-height: .9; letter-spacing: -.03em; transition: color .4s; }
+  .cnext .nx:hover { color: var(--accent); }
+  .cnext .nx span { display: inline-block; font-style: italic; font-weight: 400; color: var(--accent); transition: transform .8s var(--back); }
+  .cnext .nx:hover span { transform: translateX(14px); }
+  .cnext .all { all: unset; cursor: pointer; display: inline-block; margin-top: 26px; font-size: 14px; color: var(--soft); border-bottom: 1px solid var(--rule); transition: color .3s, border-color .3s; }
+  .cnext .all:hover { color: var(--ink); border-color: var(--ink); }
+  .coll .folio { position: absolute; opacity: 1; }
+  .stg { opacity: 0; }
+
+  /* ---------- Phones: vertical page, swipeable strips ---------- */
+  @media (max-width: 800px) {
+    :root { --pad: 16px; --h: 64vh; }
+    body { overflow: auto; }
+    .top { position: sticky; background: rgba(243,239,230,.94); backdrop-filter: blur(10px); padding: 12px 16px; }
+    .top nav { gap: 14px; font-size: 13px; }
+    .mark { font-size: 18px; white-space: nowrap; }
+    .top nav .cv { padding: 7px 11px; white-space: nowrap; }
+    .top nav .hide-m { display: none; }
+    .folio, .go { display: none; }
+    /* Block headings read horizontally above each strip */
+    .tab { display: block; width: auto; height: auto; margin: 44px 16px -18px; }
+    .tab::before { display: none; }
+    .tab span { writing-mode: horizontal-tb; transform: none; padding: 0; opacity: 1; }
+    .reel { display: block; height: auto; overflow: visible; padding: 0; cursor: auto; }
+    .cover { width: auto; padding: 28px 16px 36px; }
+    .cover h1 { font-size: 24vw; }
+    .strip { grid-template-columns: 1fr; }
+    .strip > * + * { padding-left: 0; border-left: 0; border-top: 1px solid var(--rule); }
+    .works { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; padding: 34px 16px 8px; scrollbar-width: none; scroll-margin-top: 56px; }
+    .works::-webkit-scrollbar { display: none; }
+    .card { scroll-snap-align: start; margin: 0 6px; }
+    .sheet.s1 { transform: translate(-6px, -12px) rotate(-2deg) scale(.95); }
+    .sheet.s2 { transform: translate(6px, -22px) rotate(2.5deg) scale(.9); }
+    .card .more { opacity: 1; transform: none; }
+    .desc { transform: none; }
+    .desc p { opacity: 1; transform: none; font-size: 14px; }
+    .cvspread { display: block; height: auto; max-height: none; padding: 48px 16px 0; }
+    .cvcol { height: auto; }
+    .cvcol + .cvcol { border-left: 0; padding-left: 0; margin: 36px 0 0; border-top: 1px solid var(--rule); padding-top: 28px; }
+    .contact { width: auto; padding: 64px 16px 48px; }
+    .cvspread, .contact { scroll-margin-top: 60px; }
+    .coll { overflow-y: auto; }
+    .coll-bar { position: fixed; background: rgba(243,239,230,.94); backdrop-filter: blur(10px); padding: 12px 16px; }
+    .creel { display: block; height: auto; overflow: visible; padding: 72px 0 40px; cursor: auto; }
+    .cintro { width: auto; padding: 0 16px 24px; }
+    .cintro .go { display: none; }
+    .citems { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; padding: 0 16px; scrollbar-width: none; }
+    .citems::-webkit-scrollbar { display: none; }
+    .citem { scroll-snap-align: start; }
+    .citem .frame { height: 68vh; }
+    .cnext { width: auto; margin: 40px 16px 0; padding: 20px 0 0; border-left: 0; border-top: 1px solid var(--ink); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: .01ms !important; transition-delay: 0s !important; animation-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a class="mark" href="#" data-go="cover">Jordi <em>Borraz</em></a>
+  <nav>
+    <button data-go="works" class="hide-m">Work</button>
+    <button data-go="cv">Curriculum</button>
+    <button data-go="contact">Contact</button>
+  </nav>
+</header>
+
+<main class="reel" id="reel">
+  <section class="cover" id="cover">
+    <div class="eyebrow"><span>Portfolio</span></div>
+    <h1><span class="ln"><span>Jordi</span></span><span class="ln"><span><em>Borraz</em></span></span></h1>
+    <p class="role">Digital Artist</p>
+    <div class="strip">
+      <a href="mailto:jordiborraz@gmail.com"><small>Email</small><b>jordiborraz@gmail.com</b></a>
+      <a href="tel:+34609605467"><small>Phone</small><b>609 605 467</b></a>
+    </div>
+    <div class="go">Scroll or drag to see the work <b>→</b></div>
+  </section>
+
+  <div class="tab"><span><b>01</b> — Two Dots</span></div>
+  <div class="works" id="works"></div>
+
+  <div class="tab"><span><b>02</b> — Other work</span></div>
+  <div class="works" id="works-other"></div>
+
+  <div class="tab"><span><b>03</b> — Curriculum</span></div>
+  <section class="cvspread" id="cv">
+    <div class="cvcol">
+      <div class="lbl"><small>Profile</small><h2>About me</h2></div>
+      <p class="lede">Creative digital artist with professional experience in visual effects, motion graphics and real-time content for games. A background in game design and graphic design lets me combine a technical understanding of the pipeline with a strong sense of composition, timing and storytelling.</p>
+    </div>
+    <div class="cvcol">
+      <div class="lbl"><small>Career</small><h2>Experience</h2></div>
+      <div class="entry">
+        <div class="yr">2026 — Now</div>
+        <h4>Technical Artist / VFX Intern</h4>
+        <div class="org"><b>Socialpoint (Zynga · T2 Interactive)</b>, Two Dots</div>
+        <ul>
+          <li>VFX in Unity: particle systems, shaders, prefabs and custom scripts for mechanics and UI.</li>
+          <li>Sprites, atlases and textures for VFX in Illustrator.</li>
+          <li>Character and UI animation, technical art support.</li>
+        </ul>
+      </div>
+      <div class="entry">
+        <div class="yr">2019 — 2025</div>
+        <h4>3D Jewelry Designer</h4>
+        <div class="org"><b>AS &amp; AS</b>, part-time</div>
+        <p>Design, 3D modeling, 3D printing prep and realistic renders.</p>
+      </div>
+      <div class="entry">
+        <div class="yr">2024</div>
+        <h4>Graphic Designer</h4>
+        <div class="org"><b>Grup Ros</b></div>
+        <p>Social media and print: posters, banners, bags and catalogs.</p>
+      </div>
+    </div>
+    <div class="cvcol">
+      <div class="lbl"><small>Studies</small><h2>Education</h2></div>
+      <div class="entry">
+        <div class="yr">2020 — 2024</div>
+        <h4>Bachelor's in Game Design and Production</h4>
+        <div class="org"><b>Tecnocampus</b></div>
+        <p>Unity, motion graphics, 3D, texturing and lighting. Highest grade in my class for my final art project.</p>
+      </div>
+      <div class="entry">
+        <div class="yr">2025 — 2026</div>
+        <h4>Master's Degree in 3D Product Design</h4>
+        <div class="org"><b>UPC</b></div>
+        <p>3D modeling and photorealistic rendering: cameras, materials and lighting.</p>
+      </div>
+    </div>
+    <div class="cvcol">
+      <div class="lbl"><small>Toolkit</small><h2>Tools</h2></div>
+      <ul class="kit">
+        <li>Unity <span>engine</span></li><li>Unreal Engine <span>engine</span></li><li>After Effects <span>motion</span></li>
+        <li>Photoshop · Illustrator <span>2D</span></li><li>Blender · 3ds Max <span>3D</span></li><li>ZBrush <span>3D</span></li>
+        <li>C# · Git <span>tech</span></li><li>Scrum · Jira <span>organization</span></li>
+        <li>Claude (Anthropic) · Gemini <span>AI</span></li>
+      </ul>
+      <ul class="kit">
+        <li>Spanish · Catalan · English <span></span></li><li>French <span>B1</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="tab"><span><b>04</b> — Contact</span></div>
+  <section class="contact rv" id="contact">
+    <h2><span class="ln"><span>Let's make</span></span><span class="ln"><span>something <em>move.</em></span></span></h2>
+    <a class="mail" href="mailto:jordiborraz@gmail.com">jordiborraz@gmail.com</a>
+  </section>
+</main>
+
+<footer class="folio">
+  <b>Jordi Borraz — Portfolio</b>
+  <div class="bar"><i id="bar"></i></div>
+  <span class="where" id="where"><span>Cover</span></span>
+</footer>
+
+<div class="cur" id="cur"><b>Open</b></div>
+
+<div class="coll" id="coll" role="dialog" aria-modal="true" aria-label="Chapter">
+  <div class="coll-bar">
+    <button class="back stg" id="back"><b>←</b> All work</button>
+    <span class="coll-count stg" id="coll-count"></span>
+  </div>
+  <div class="creel" id="creel">
+    <section class="cintro">
+      <div class="cnum stg" id="c-num"></div>
+      <h2 id="c-title"></h2>
+      <p class="stg" id="c-sub"></p>
+      <p class="stg cdesc" id="c-intro"></p>
+      <div class="go stg" style="opacity:0">Scroll or drag <b>→</b></div>
+    </section>
+    <div class="citems" id="citems"></div>
+    <section class="cnext stg">
+      <small>Next</small>
+      <button class="nx" id="c-next"></button>
+      <button class="all" id="c-all">Back to all work</button>
+    </section>
+  </div>
+  <footer class="folio">
+    <b id="c-folio"></b>
+    <div class="bar"><i id="cbar"></i></div>
+    <span class="where"><span>Scroll →</span></span>
+  </footer>
+  <div class="coll-cover" id="coll-cover"><img alt=""></div>
+</div>
+
+<script>
+  // ============================================================
+  // YOUR WORK — each chapter is one theme shown as a card.
+  // Click a card to open the chapter and see all its videos.
+  // For now the chapters repeat existing videos as placeholders.
+  // ============================================================
+  const MEDIA = {
+    // Local clips (cropped and encoded into videos/)
+    coin:     { title: "Popup character animations and VFX", image: "videos/coin_floating.jpg?v=2", video: "videos/coin_floating.mp4?v=2" },
+    winScreen: { title: "First try win", image: "videos/win_screen.jpg?v=4", video: "videos/win_screen.mp4?v=4" },
+    dotbotAnim: { title: "Dotbot",       image: "videos/dotbot.jpg", video: "videos/dotbot.mp4" },
+    mechBomb: { title: "Rainbow combo", desc: "I was in charge of creating the most powerful booster in the game. The brief: it had to feel powerful and spectacular.",  image: "videos/mechanic_bomb.jpg?v=4", video: "videos/mechanic_bomb.mp4?v=5" },
+    mechChest: { title: "Paperbox", desc: "A mechanic with three stages. I worked on the VFX of the falling papers and the final effect of the cardboard box breaking.",      image: "videos/mech_chest.jpg", video: "videos/mech_chest.mp4" },
+    mechJars:  { title: "Vase", desc: "I drew the sprites of the vase chunks in Illustrator, then created the VFX and the motion of the chunks in Unity.",          image: "videos/mech_jars.jpg?v=2", video: "videos/mech_jars.mp4?v=2" },
+    mechBoomerang: { title: "Boomerangs", desc: "I created the shaders for the preview path and the boomerang's trail, and a script to control them. I also made the animations and secondary VFX.", image: "videos/mech_boomerang.jpg?v=4", video: "videos/mech_boomerang.mp4?v=4" },
+    mechLamp:  { title: "Camping Lamp", desc: "I created different states with VFX and animations, so you can follow how the lantern lights up and finally breaks.",  image: "videos/mech_lamp.jpg", video: "videos/mech_lamp.mp4" },
+    battlePass: { title: "Battle Pass UI animations and VFX", image: "videos/other_battlepass.jpg?v=2", video: "videos/other_battlepass.mp4?v=2" },
+    // Graphic design: still images of different sizes (w/h keep their real ratio inside the chapter)
+    gdPost:    { title: "AS Art in Silver — social post", desc: "A post I designed to promote our new website on Instagram. I also crafted the website: asartinsilver.com.", image: "images/graphic/gdPost.jpg", video: "", w: 1080, h: 1080, fit: "contain" },
+    gdMood:    { title: "AS Art in Silver — handcrafted sign", desc: "A sign to promote that we make handcrafted and customizable products.",   image: "images/graphic/gdMood.jpg", video: "", w: 1600, h: 1131, fit: "contain" },
+    gdBanner:  { title: "AS Art in Silver — email template", desc: "A template for an email I designed to send to clients.",      image: "images/graphic/gdBanner.jpg", video: "", w: 604, h: 1600, fit: "contain" },
+    gdLabel:   { title: "Peixos Ros — label", desc: "A product label I had to create in my role as a graphic designer at Grup Ros.",             image: "images/graphic/gdLabel.jpg", video: "", w: 1600, h: 1131, fit: "contain" },
+    gdPoster:  { title: "Peixos Ros — offer", desc: "An offer I had to create to send to clients in order to promote our new deals.",            image: "images/graphic/gdPoster.jpg", video: "", w: 1131, h: 1600, fit: "contain" },
+    gdPrices:  { title: "Peixos Ros — price list", desc: "A price list to send to our clients with our daily offers.",        image: "images/graphic/gdPrices.jpg", video: "", w: 1131, h: 1600, fit: "contain" },
+    // The social post filling the main reel card (cropped, like the reference)
+    gdPostCover: { title: "AS Art in Silver — social post", image: "images/graphic/gdPost.jpg", video: "", pos: "72% 50%" },
+    // Jewelry design: renders and turntables at their real ratio inside the chapter
+    jewelRings:    { title: "Ring set — animation", desc: "Animation of a model I created. Modeled in ZBrush, animated and rendered in KeyShot.",      image: "videos/jewel_rings.jpg", video: "videos/jewel_rings.mp4", w: 1280, h: 720 },
+    jewelSilver:   { title: "Silver filigree ring", desc: "Silver filigree ring with three stones. Modeled in ZBrush and rendered in KeyShot.",      image: "images/jewelry/ring_silver.jpg", video: "", w: 1920, h: 1080, fit: "contain" },
+    jewelGold:     { title: "Gold filigree ring", desc: "Gold filigree ring with three stones. Modeled in ZBrush and rendered in KeyShot.",        image: "images/jewelry/ring_gold.jpg", video: "", w: 1920, h: 1080, fit: "contain" },
+    jewelTwoTone:  { title: "Gold & silver rings", desc: "Set of gold and silver rings. Modeled in ZBrush and rendered in KeyShot.",       image: "images/jewelry/rings_gold_silver.jpg", video: "", w: 1920, h: 1080, fit: "contain" },
+    jewelLion:     { title: "Lion signet ring", desc: "Optimized 3D render of a model for interactive web viewing, which I made some time ago. Modeled in ZBrush.",          image: "images/jewelry/lion.jpg", video: "", w: 1413, h: 1111, fit: "contain" },
+    jewelLionSide: { title: "Lion signet ring — side", desc: "Optimized 3D render of a model for interactive web viewing, which I made some time ago. Modeled in ZBrush.",   image: "images/jewelry/lion_side.jpg", video: "", w: 1588, h: 1051, fit: "contain" },
+    jewelSquirtle: { title: "Squirtle pendant", desc: "Squirtle pendant fully set with stones. Modeled in ZBrush and rendered in KeyShot.",          image: "images/jewelry/squirtle.jpg", video: "", w: 985, h: 1027, fit: "contain" },
+    jewelSquirtleVid: { title: "Squirtle pendant — turntable", desc: "Turntable of the Squirtle pendant. Modeled in ZBrush and rendered in KeyShot.", image: "videos/jewel_squirtle.jpg", video: "videos/jewel_squirtle.mp4", w: 1280, h: 620 },
+    jewelBat:      { title: "Bat pendant", desc: "Photo of a personalized piece of jewelry I made for a client. Modeled in ZBrush.",               image: "images/jewelry/bat_pendant.jpg", video: "", w: 1087, h: 876, fit: "contain" },
+    // 3D in Unreal / Unity: landscapes (video) and the Art Nouveau interior (renders)
+    tdMountains: { title: "Mountains", desc: "A mountain scene I made in Blender.",                image: "videos/3d_mountains.jpg", video: "videos/3d_mountains.mp4", w: 1280, h: 720 },
+    tdDesert:    { title: "Desert", desc: "A desert scene I made in Blender.",                   image: "videos/3d_desert.jpg", video: "videos/3d_desert.mp4", w: 1600, h: 676 },
+    tdIceberg:   { title: "Iceberg", desc: "An iceberg scene I made in Blender.",                  image: "videos/3d_anim.jpg", video: "videos/3d_anim.mp4", w: 1600, h: 676 },
+    tdGreenRoom: { title: "Art Nouveau — green room", desc: "My final degree project for the Bachelor's in Game Design and Production: an Art Nouveau-inspired jewelry environment crafted in Unreal Engine and Blender. It received the highest grade in art of all the projects that year.", image: "images/3d/nouveau_green_room.jpg", video: "", w: 2000, h: 776, fit: "contain" },
+    tdGreenhouse:{ title: "Art Nouveau — greenhouse", desc: "An Art Nouveau-inspired jewelry environment I crafted using Unreal Engine and Blender.", image: "images/3d/nouveau_greenhouse.jpg", video: "", w: 2000, h: 773, fit: "contain" },
+    tdHall:      { title: "Art Nouveau — hall", desc: "An Art Nouveau-inspired jewelry environment I crafted using Unreal Engine and Blender.",       image: "images/3d/nouveau_hall.jpg", video: "", w: 2000, h: 774, fit: "contain" },
+    tdGallery:   { title: "Art Nouveau — gallery", desc: "An Art Nouveau-inspired jewelry environment I crafted using Unreal Engine and Blender.",    image: "images/3d/nouveau_gallery.jpg", video: "", w: 2000, h: 774, fit: "contain" },
+    tdShowroom:  { title: "Art Nouveau — showroom", desc: "An Art Nouveau-inspired jewelry environment I crafted using Unreal Engine and Blender.",   image: "images/3d/nouveau_showroom.jpg", video: "", w: 2000, h: 774, fit: "contain" },
+  };
+  const M = MEDIA;
+  // group: "twodots" → first block of the reel, "other" → second block.
+  // cover: what the card shows on the main reel (defaults to the first item).
+  // single: the card just plays its video on the main reel and doesn't open a chapter.
+  const CHAPTERS = [
+    { group: "twodots", title: "Hero Booster", desc: "I worked on the Dotbot feature: I created the wake-up and go-to-sleep animations, and all the VFX for the animations and the popup.", sub: "Character animations · VFX", single: true, items: [M.dotbotAnim] },
+    { group: "twodots", title: "Win Screen", desc: "I was in charge of the win screen rework: I created the motion of the screen and all the VFX shown on it.", sub: "VFX · UI animations", single: true, items: [M.winScreen] },
+    { group: "twodots", title: "Battle Pass", desc: "I worked on the Battle Pass feature, creating all the UI animations and the VFX that complement the screen.", sub: "UI animations · VFX", single: true, items: [M.battlePass] },
+    { group: "twodots", title: "Popup", desc: "I created the whole animation and VFX for this popup, from the coin rain to the character animations.", sub: "Character animations · VFX", single: true, items: [M.coin] },
+    { group: "twodots", title: "Mechanics", intro: "A big part of my work at Two Dots is creating new mechanics for the game, as part of the new mechanics team. These are some of the ones I created.", items: [M.mechBomb, M.mechChest, M.mechJars, M.mechBoomerang, M.mechLamp] },
+    { group: "other",   title: "3D", intro: "Environments and scenes I crafted using Blender and Unreal Engine.", sub: "Blender · Unreal Engine", items: [M.tdMountains, M.tdDesert, M.tdIceberg, M.tdGreenRoom, M.tdGreenhouse, M.tdHall, M.tdGallery, M.tdShowroom] },
+    { group: "other",   title: "Jewelry design", intro: "Models I designed and produced, sculpted in ZBrush and rendered in KeyShot. More of them at asartinsilver.com/mosaic.", items: [M.jewelRings, M.jewelSquirtleVid, M.jewelSilver, M.jewelGold, M.jewelTwoTone, M.jewelLion, M.jewelLionSide, M.jewelSquirtle, M.jewelBat] },
+    { group: "other",   title: "Graphic design", cover: M.gdPostCover, items: [M.gdPost, M.gdMood, M.gdBanner, M.gdLabel, M.gdPoster, M.gdPrices] }
+  ];
+
+  const $ = id => document.getElementById(id);
+  const two = n => String(n).padStart(2, "0");
+  const desktop = matchMedia("(min-width: 801px)");
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const finePointer = matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const EXPO = "cubic-bezier(.19,1,.22,1)", EXPO_IO = "cubic-bezier(.87,0,.13,1)";
+  const dur = ms => reduced ? 1 : ms;
+  const wait = ms => new Promise(r => setTimeout(r, reduced ? 0 : ms));
+  // Wait for an animation, but never longer than its duration plus a margin (paused tabs, slow machines).
+  const settle = (anim, ms) => Promise.race([anim.finished.catch(() => {}), wait(ms + 150)]).then(() => { try { anim.finish(); } catch (e) {} });
+  const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const coverOf = ch => ch.cover || ch.items[0];
+  // Shown on hover over every card and every piece until it gets its own desc.
+  const PLACEHOLDER = "Placeholder text: a short note about this piece — what it shows, what you made and the tools used. Two or three lines read best here.";
+  const descHTML = d => `<div class="desc"><p>${d || PLACEHOLDER}</p></div>`;
+  const countLabel = items => {
+    const word = items.every(m => m.video) ? "video" : items.some(m => m.video) ? "piece" : "image";
+    return `${items.length} ${word}${items.length === 1 ? "" : "s"}`;
+  };
+
+  // preload "auto" for the main reel cards, so their videos are ready before they scroll in.
+  function mediaHTML(m, preload = "metadata") {
+    return `<div class="media${m.fit === "contain" ? " contain" : ""}"><img src="${m.image}" alt="" draggable="false"${m.pos ? ` style="object-position: ${m.pos}"` : ""}>` +
+      (m.video ? `<video src="${m.video}" muted loop playsinline disableremoteplayback preload="${preload}"></video>` : "") + `</div>`;
+  }
+
+  // ---------- Smooth horizontal reel (wheel + drag) ----------
+  function smoothReel(el, bar, wheelTarget, onFrame) {
+    let target = 0, current = 0, running = false;
+    let dragX = null, startScroll = 0, lastX = 0, velocity = 0, moved = false;
+    const max = () => el.scrollWidth - el.clientWidth;
+    const clamp = x => Math.max(0, Math.min(max(), x));
+    function tick() {
+      current += (target - current) * 0.075;
+      if (Math.abs(target - current) < 0.4) current = target;
+      el.scrollLeft = current;
+      if (current !== target) requestAnimationFrame(tick); else running = false;
+    }
+    function glideTo(x) { target = clamp(x); if (!running) { running = true; current = el.scrollLeft; requestAnimationFrame(tick); } }
+    function jumpTo(x) { running = false; target = current = clamp(x); el.scrollLeft = current; }
+    (wheelTarget || el).addEventListener("wheel", e => {
+      if (!desktop.matches) return;
+      e.preventDefault();
+      const d = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+      glideTo(target + d * 0.95);
+    }, { passive: false });
+    el.addEventListener("pointerdown", e => {
+      if (!desktop.matches || e.pointerType !== "mouse" || e.button !== 0 || e.target.closest("button, a")) return;
+      dragX = lastX = e.clientX; startScroll = el.scrollLeft; velocity = 0; moved = false;
+      target = current = startScroll; running = false;
+      el.classList.add("dragging");
+    });
+    addEventListener("pointermove", e => {
+      if (dragX === null) return;
+      velocity = e.clientX - lastX; lastX = e.clientX;
+      if (Math.abs(e.clientX - dragX) > 4) moved = true;
+      target = current = clamp(startScroll - (e.clientX - dragX));
+      el.scrollLeft = current;
+    });
+    addEventListener("pointerup", () => {
+      if (dragX === null) return;
+      dragX = null; el.classList.remove("dragging");
+      glideTo(el.scrollLeft - velocity * 14);
+    });
+    el.addEventListener("click", e => { if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; } }, true);
+    el.addEventListener("scroll", () => {
+      if (!running && dragX === null) target = current = el.scrollLeft;
+      if (bar) bar.style.transform = `scaleX(${max() ? el.scrollLeft / max() : 0})`;
+      if (onFrame) onFrame();
+    });
+    return { glideTo, jumpTo };
+  }
+
+  // ---------- Main reel ----------
+  const reel = $("reel"), works = $("works"), worksOther = $("works-other");
+  let collOpen = false, loaded = false;
+
+  const cards = CHAPTERS.map((ch, c) => {
+    const cover = coverOf(ch);
+    const card = document.createElement("figure");
+    card.className = (ch.single ? "card single" : "card");
+    card.innerHTML =
+      `<div class="lift">` +
+      (ch.single ? "" : ch.items.filter(m => m.title !== cover.title).slice(0, 2).map((m, k) => `<div class="sheet s${k + 1}"><img src="${m.image}" alt="" draggable="false"></div>`).join("")) +
+      `<div class="frame">${mediaHTML(cover, "auto")}` +
+      (ch.single ? descHTML(ch.desc) : "") +
+      `</div>` +
+            `<figcaption><h3><span>${ch.title}</span></h3>` +
+      `<div class="tag">${ch.sub ? `<span class="sub">${ch.sub}</span>` : ""}` +
+      (ch.single ? "" : `<span class="more">${countLabel(ch.items)} →</span>`) +
+      `</div></figcaption></div>`;
+    (ch.group === "other" ? worksOther : works).appendChild(card);
+    if (!ch.single) card.addEventListener("click", () => openChapter(c));
+    return card;
+  });
+
+  const mainReel = smoothReel(reel, $("bar"));
+
+  // Cards slide and unmask into view; the first ones stagger on load.
+  const revealIO = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    const el = e.target;
+    if (el.classList.contains("card")) {
+      const k = cards.indexOf(el);
+      el.style.setProperty("--d", loaded ? "0ms" : `${650 + k * 110}ms`);
+      setTimeout(() => el.style.setProperty("--d", "0ms"), 2600);
+    }
+    el.classList.add("in");
+    revealIO.unobserve(el);
+  }), { threshold: 0.12 });
+  const revealables = [...cards, ...document.querySelectorAll(".tab, .cvspread, .contact")];
+  revealables.forEach(el => revealIO.observe(el));
+  // Belt and braces: also reveal by position on every scroll, so nothing can stay hidden.
+  function revealCheck() {
+    revealables.forEach(el => {
+      if (el.classList.contains("in")) return;
+      const r = el.getBoundingClientRect();
+      const visible = desktop.matches ? (r.left < innerWidth * 1.1 && r.right > 0) : (r.top < innerHeight * 1.1 && r.bottom > 0);
+      if (!visible) return;
+      if (el.classList.contains("card") && !loaded) el.style.setProperty("--d", `${650 + cards.indexOf(el) * 110}ms`);
+      el.classList.add("in"); revealIO.unobserve(el);
+    });
+  }
+  reel.addEventListener("scroll", revealCheck, { passive: true });
+  addEventListener("scroll", revealCheck, { passive: true });
+  addEventListener("resize", revealCheck);
+
+  // Videos play while on screen (and pause while a chapter is open).
+  const mainIO = new IntersectionObserver(entries => entries.forEach(e => {
+    const v = e.target.querySelector(".frame video");
+    e.target._visible = e.isIntersecting;
+    if (!v) return;
+    if (e.isIntersecting && !collOpen) v.play().then(() => e.target.classList.add("live")).catch(() => {});
+    else if (!e.isIntersecting) { v.pause(); e.target.classList.remove("live"); }
+  }), { threshold: 0 });
+  cards.forEach(c => mainIO.observe(c));
+  function setMainPlayback(play) {
+    cards.forEach(c => {
+      const v = c.querySelector(".frame video");
+      if (!v) return;
+      if (play && c._visible) v.play().then(() => c.classList.add("live")).catch(() => {});
+      else if (!play) v.pause();
+    });
+  }
+
+  // ---------- Cursor follower ----------
+  const cur = $("cur");
+  if (finePointer) {
+    // Follows the mouse exactly, with no lag.
+    cur.classList.add("hide");
+    addEventListener("mousemove", e => {
+      cur.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+      cur.classList.remove("hide");
+    }, { passive: true });
+    addEventListener("mouseover", e => {
+      const onCard = !!e.target.closest(".card:not(.single)") && !collOpen;
+      cur.classList.toggle("big", onCard);
+      cur.classList.toggle("link", !onCard && !!e.target.closest("a, button"));
+    });
+    document.addEventListener("mouseleave", () => cur.classList.add("hide"));
+    document.addEventListener("mouseenter", () => cur.classList.remove("hide"));
+  }
+
+  // ---------- Chapter view ----------
+  const coll = $("coll"), creel = $("creel"), citems = $("citems"), cover = $("coll-cover");
+  const chapReel = smoothReel(creel, $("cbar"), coll);
+  let current = -1, busy = false, pending = false, backSent = false, collIO = null;
+
+  // The next chapter that opens (cards marked single are skipped).
+  function nextChapter(c) {
+    do { c = (c + 1) % CHAPTERS.length; } while (CHAPTERS[c].single);
+    return c;
+  }
+
+  function done() {
+    busy = false;
+    if (pending) { pending = false; syncHistory(); }
+  }
+
+  function fillChapter(c) {
+    const ch = CHAPTERS[c];
+    $("c-num").textContent = "";
+    $("c-title").classList.toggle("long", ch.title.length > 16);
+    $("c-title").innerHTML = ch.title.split(" ").map(w => `<span class="w"><span>${w}</span></span>`).join(" ");
+    $("c-sub").textContent = (ch.sub ? ch.sub + " — " : "") + countLabel(ch.items);
+    $("c-intro").textContent = ch.intro || "";
+    $("coll-count").textContent = ch.title;
+    $("c-folio").textContent = ch.title;
+    const next = CHAPTERS[nextChapter(c)];
+    $("c-next").innerHTML = `${next.title} <span>→</span>`;
+    if (collIO) collIO.disconnect();
+    citems.innerHTML = ch.items.map((m, k) =>
+      `<figure class="citem"><div class="frame"${m.w ? ` style="aspect-ratio: ${m.w} / ${m.h}"` : ""}>${mediaHTML(m)}${descHTML(m.desc)}` +
+      `</div>` +
+      `<figcaption><span class="ft">${m.title}</span></figcaption></figure>`).join("");
+    const items = [...citems.children];
+    collIO = new IntersectionObserver(entries => entries.forEach(e => {
+      const v = e.target.querySelector("video");
+      if (!v) return;
+      if (e.isIntersecting) v.play().then(() => e.target.classList.add("live")).catch(() => {});
+      else { v.pause(); e.target.classList.remove("live"); }
+    }), { threshold: 0.3 });
+    items.forEach(it => collIO.observe(it));
+    chapReel.jumpTo(0);
+    coll.scrollTop = 0;
+  }
+
+  // Entrance: small text fades up, title words rise out of a mask, videos unmask one after another.
+  function enter(delay = 0) {
+    const t = (el, kf, d, ms = 1100) => el.animate(kf, { duration: dur(ms), delay: reduced ? 0 : delay + d, easing: EXPO, fill: "both" });
+    let k = 0;
+    coll.querySelectorAll(".stg").forEach(el => t(el, [{ opacity: 0, transform: "translateY(24px)" }, { opacity: 1, transform: "none" }], 120 + (k++) * 60));
+    coll.querySelector(".cnum").animate([{ opacity: 0 }, { opacity: 1 }], { duration: dur(600), delay: reduced ? 0 : delay, fill: "both" });
+    $("c-title").querySelectorAll(".w > span").forEach((s, i) => t(s, [{ transform: "translateY(110%) rotate(5deg)" }, { transform: "none" }], 60 + i * 90, 1300));
+    citems.querySelectorAll(".citem").forEach((it, i) => {
+      t(it, [{ transform: "translateX(140px)", opacity: 0 }, { transform: "none", opacity: 1 }], 200 + i * 120, 1400);
+      t(it.querySelector(".frame"), [{ clipPath: "inset(100% 0 0 0)" }, { clipPath: "inset(0 0 0 0)" }], 260 + i * 120, 1400);
+    });
+    return wait(900);
+  }
+  function leave() {
+    const all = [...coll.querySelectorAll(".stg, .cnum"), ...citems.querySelectorAll(".citem")];
+    all.forEach((el, k) => el.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "translateX(-40px)" }],
+      { duration: dur(420), delay: reduced ? 0 : Math.min(k, 8) * 25, easing: "cubic-bezier(.55,0,.75,.2)", fill: "both" }));
+    $("c-title").querySelectorAll(".w > span").forEach((s, i) =>
+      s.animate([{ transform: "none" }, { transform: "translateY(-110%)" }], { duration: dur(520), delay: reduced ? 0 : i * 50, easing: "cubic-bezier(.55,0,.75,.2)", fill: "both" }));
+    return wait(560);
+  }
+
+  // The chapter grows out of the card: a clip-path animates from the card's rectangle to the full screen.
+  function insetFor(el) {
+    const r = el.getBoundingClientRect();
+    return `inset(${r.top}px ${innerWidth - r.right}px ${innerHeight - r.bottom}px ${r.left}px)`;
+  }
+
+  async function openChapter(c, fromHistory = false) {
+    if (busy || collOpen) return;
+    busy = true; collOpen = true; current = c;
+    cur.classList.remove("big");
+    if (!fromHistory) history.pushState({ ch: c }, "", "#" + slug(CHAPTERS[c].title));
+    setMainPlayback(false);
+    fillChapter(c);
+    cover.querySelector("img").src = coverOf(CHAPTERS[c]).image;
+    coll.classList.add("open");
+    document.body.style.overflow = "hidden";
+    const frame = cards[c].querySelector(".frame");
+    const grow = coll.animate([{ clipPath: insetFor(frame) }, { clipPath: "inset(0px 0px 0px 0px)" }], { duration: dur(1100), easing: EXPO_IO, fill: "both" });
+    settle(cover.animate([{ opacity: 1 }, { opacity: 1, offset: .55 }, { opacity: 0 }], { duration: dur(1500), easing: "ease-out", fill: "both" }), 1500);
+    settle(cover.querySelector("img").animate([{ transform: "scale(1.35)" }, { transform: "scale(1)" }], { duration: dur(1500), easing: EXPO, fill: "both" }), 1500);
+    enter(reduced ? 0 : 700);
+    await settle(grow, 1100);
+    done();
+    $("back").focus({ preventScroll: true });
+  }
+
+  async function closeChapter() {
+    if (busy || !collOpen) return;
+    busy = true;
+    const card = cards[current], frame = card.querySelector(".frame");
+    // If the card isn't on screen (after "next chapter"), bring it into view behind the overlay first.
+    const r = frame.getBoundingClientRect();
+    if (desktop.matches && (r.left < 0 || r.right > innerWidth)) mainReel.jumpTo(card.offsetLeft - (innerWidth - r.width) / 2);
+    else if (!desktop.matches && (r.top < 0 || r.bottom > innerHeight)) card.scrollIntoView({ block: "center" });
+    cover.querySelector("img").src = coverOf(CHAPTERS[current]).image;
+    await leave();
+    cover.querySelector("img").animate([{ transform: "scale(1)" }, { transform: "scale(1.15)" }], { duration: dur(1000), easing: EXPO_IO, fill: "both" });
+    cover.animate([{ opacity: 0 }, { opacity: 1 }], { duration: dur(380), easing: "ease-out", fill: "both" });
+    await wait(180);
+    await settle(coll.animate([{ clipPath: "inset(0px 0px 0px 0px)" }, { clipPath: insetFor(frame) }], { duration: dur(950), easing: EXPO_IO, fill: "both" }), 950);
+    coll.classList.remove("open");
+    coll.getAnimations({ subtree: true }).forEach(a => a.cancel());
+    if (collIO) collIO.disconnect();
+    citems.innerHTML = "";
+    document.body.style.overflow = "";
+    collOpen = false;
+    setMainPlayback(true);
+    frame.animate([{ transform: "scale(.94)" }, { transform: "none" }], { duration: dur(1000), easing: EXPO });
+    done();
+  }
+
+  async function goNext() {
+    if (busy) return;
+    busy = true;
+    await leave();
+    current = nextChapter(current);
+    // If a "back" arrived during the exit animation, leave the history alone so it can close.
+    if (!pending) history.replaceState({ ch: current }, "", "#" + slug(CHAPTERS[current].title));
+    coll.getAnimations({ subtree: true }).forEach(a => a.cancel());
+    fillChapter(current);
+    // Keep the main reel in step, so "back" lands on this card.
+    const card = cards[current];
+    if (desktop.matches) mainReel.jumpTo(card.offsetLeft - (innerWidth - card.offsetWidth) / 2);
+    await enter(0);
+    done();
+  }
+
+  function syncHistory() {
+    if (collOpen && !(history.state && history.state.ch != null)) closeChapter();
+    else if (!collOpen && history.state && history.state.ch != null) openChapter(history.state.ch, true);
+  }
+  const requestClose = () => {
+    if (backSent) return;   // a double click shouldn't go back twice
+    if (history.state && history.state.ch != null) {
+      backSent = true; history.back();
+      // Plan B: if the browser ignores the back step, close anyway.
+      setTimeout(() => {
+        if (!backSent) return;
+        backSent = false;
+        history.replaceState(null, "", location.pathname);
+        if (busy) pending = true; else syncHistory();
+      }, 600);
+    } else closeChapter();
+  };
+  $("back").addEventListener("click", requestClose);
+  $("c-all").addEventListener("click", requestClose);
+  $("c-next").addEventListener("click", goNext);
+  addEventListener("popstate", () => { backSent = false; if (busy) pending = true; else syncHistory(); });
+  addEventListener("keydown", e => {
+    if (collOpen) {
+      if (e.key === "Escape") requestClose();
+      if (e.key === "ArrowRight") chapReel.glideTo(creel.scrollLeft + innerWidth * 0.4);
+      if (e.key === "ArrowLeft") chapReel.glideTo(creel.scrollLeft - innerWidth * 0.4);
+    } else if (desktop.matches) {
+      if (e.key === "ArrowRight") mainReel.glideTo(reel.scrollLeft + innerWidth * 0.4);
+      if (e.key === "ArrowLeft") mainReel.glideTo(reel.scrollLeft - innerWidth * 0.4);
+    }
+  });
+  if (location.hash) history.replaceState(null, "", location.pathname);
+
+  // ---------- Top nav + folio ----------
+  const marks = { cover: $("cover"), works: cards[0], cv: $("cv"), contact: $("contact") };
+  const names = { cover: "Cover", works: "Selected work", cv: "Curriculum", contact: "Contact" };
+  const navBtns = [...document.querySelectorAll("[data-go]")];
+  navBtns.forEach(b => b.addEventListener("click", e => {
+    e.preventDefault();
+    const el = marks[b.dataset.go];
+    if (desktop.matches) mainReel.glideTo(b.dataset.go === "cover" ? 0 : el.offsetLeft - 90);
+    else el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }));
+  // The folio label slides up to its new text
+  const where = $("where");
+  let whereText = "Cover";
+  function setWhere(t) {
+    if (t === whereText) return;
+    whereText = t;
+    const old = where.querySelector("span:not(.out)");
+    const nu = document.createElement("span"); nu.className = "in"; nu.textContent = t;
+    where.appendChild(nu);
+    requestAnimationFrame(() => { nu.classList.remove("in"); if (old) old.classList.add("out"); });
+    setTimeout(() => { if (old) old.remove(); }, 800);
+  }
+  reel.addEventListener("scroll", () => {
+    const x = reel.scrollLeft + reel.clientWidth / 2;
+    const at = x >= marks.contact.offsetLeft ? "contact" : x >= marks.cv.offsetLeft ? "cv" : x >= marks.works.offsetLeft ? "works" : "cover";
+    navBtns.forEach(b => b.tagName === "BUTTON" && b.classList.toggle("on", b.dataset.go === at));
+    let label = names[at];
+    if (at === "works") {
+      const i = cards.findIndex(c => c.offsetLeft + c.offsetWidth / 2 >= x - c.offsetWidth / 2);
+      if (i >= 0) label = `${CHAPTERS[i].group === "other" ? "Other work" : "Two Dots"} — ${CHAPTERS[i].title}`;
+    }
+    setWhere(label);
+  });
+
+  // ---------- Opening sequence ----------
+  let started = false;
+  const go = () => {
+    if (started) return; started = true;
+    document.body.classList.add("ready");
+    revealCheck();
+    // The whole Two Dots block enters with the opening, so its cards are already there when you scroll to them.
+    cards.forEach((c, k) => {
+      if (CHAPTERS[k].group !== "twodots" || c.classList.contains("in")) return;
+      c.style.setProperty("--d", `${650 + k * 110}ms`);
+      c.classList.add("in"); revealIO.unobserve(c);
+    });
+    setTimeout(() => cards.forEach(c => c.style.setProperty("--d", "0ms")), 2600);
+    // Anything scrolled to later reveals at once.
+    loaded = true;
+  };
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(go); else addEventListener("load", go);
+  setTimeout(go, 1600);
+</script>
+<script>
+  // Visit notice to the Telegram bot. Open the page once with ?yo to stop your own visits notifying.
+  (function () {
+    try {
+      if (/[?&]yo\b/.test(location.search)) localStorage.setItem("noVisitPing", "1");
+      if (localStorage.getItem("noVisitPing")) return;
+    } catch (e) {}
+    var data = JSON.stringify({ ref: document.referrer });
+    var url = "https://jobradar-bot.jordiborraz.workers.dev/visit";
+    if (!(navigator.sendBeacon && navigator.sendBeacon(url, data))) fetch(url, { method: "POST", body: data, keepalive: true }).catch(function () {});
+  })();
+</script>
+</body>
+</html>
